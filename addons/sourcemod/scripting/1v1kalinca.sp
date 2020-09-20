@@ -17,8 +17,6 @@ char finish_time[64];
 
 new Handle:h_timer = INVALID_HANDLE;
 
-new Handle:IPAktif;
-
 public Plugin myinfo = 
 {
 	name = "1v1 Kalında Round Bitirme",
@@ -34,36 +32,6 @@ public void OnPluginStart()
 	g_tag = CreateConVar("tags", "leaderclan", "Pluginleri başında olmasını istediğiniz tag", FCVAR_NOTIFY);
 	round_finish_time = CreateConVar("sm_rounddraw_time", "35", "Kaç saniye sonra round bitirilsin.", FCVAR_NOTIFY, true, 0.0, true, 60.0);
 	AutoExecConfig(true, "1v1Kalinca", "alispw77");
-}
-
-public void OnMapStart()
-{
-    /*new String:serverip[32];
-    new Handle:gb_ServerIP;
-    
-    gb_ServerIP = FindConVar("ip");
-    GetConVarString(gb_ServerIP, serverip, 32);
-
-    if(StrEqual(serverip, "45.10.56.11", true))
-    {
-        // EMPTY //
-    }
-    else
-    {
-        IPAktif = 1;
-    }*/
-}
-
-public void OnClientPostAdminCheck(client)
-{
-    if(IPAktif)
-    {
-        for (new i = 1; i <= MaxClients; i++)
-            if(IsClientInGame(i))
-            {
-                KickClient(i, "Bu Eklenti XXX Sunucusuna Aittir Burada Kullanılamaz.Lütfen Eklentiyi Siliniz.[1v1Kalinca Eklentisi]");
-            }                
-    }
 }
 
 public Action:splayerdeath(Handle:event, const String:name[], bool:dontBroadcast)
