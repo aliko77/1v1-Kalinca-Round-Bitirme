@@ -2,106 +2,59 @@
 
 #define DEBUG
 
-#define PLUGIN_AUTHOR "ali<.d"
-#define PLUGIN_VERSION "0.00"
+#define PLUGIN_AUTHOR "alikoc77"
+#define PLUGIN_VERSION "1.00"
 
 #include <sourcemod>
-#include <cstrike>
 #include <sdktools>
-#include <multicolors>
+#include <cstrike>
 
-ConVar g_tag, round_finish_time;
+#pragma newdecls required
 
-char tag1[999];
-char finish_time[64];
-
-new Handle:h_timer = INVALID_HANDLE;
+Handle g_timer = null;
 
 public Plugin myinfo = 
 {
-	name = "1v1 Kalında Round Bitirme",
+	name = "",
 	author = PLUGIN_AUTHOR,
-	description = "Sevmek için sevilmek gerekir.",
+	description = "",
 	version = PLUGIN_VERSION,
-	url = "alikoc77"
+	url = "https://steamcommunity.com/id/alikoc77"
 };
 
-public void OnPluginStart()
-{
-	HookEvent("player_death", splayerdeath);
-	g_tag = CreateConVar("tags", "leaderclan", "Pluginleri başında olmasını istediğiniz tag", FCVAR_NOTIFY);
-	round_finish_time = CreateConVar("sm_rounddraw_time", "35", "Kaç saniye sonra round bitirilsin.", FCVAR_NOTIFY, true, 0.0, true, 60.0);
-	AutoExecConfig(true, "1v1Kalinca", "alispw77");
+public void OnPluginStart(){
+	 HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
+	 HookEvent("round_end", Event_RoundEnd, EventHookMode_Pre);
+	 RegConsoleCmd("sm_rrr", comrrr);
 }
-
-public Action:splayerdeath(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	GetConVarString(round_finish_time, finish_time, sizeof(finish_time));
-	GetConVarString(g_tag, tag1, sizeof(tag1));
-	int yasayant;
-	int yasayanct;
-	for (new i = 1; i < MaxClients; i++)
-	if (IsClientInGame(i) && IsPlayerAlive(i))
-	{
-		if (GetClientTeam(i) == CS_TEAM_T)
-			yasayant++;
-				
-		if (GetClientTeam(i) == CS_TEAM_CT)
-			yasayanct++;
-	}
-	if (yasayant == 1 && yasayanct == 1)
-	{
-		CPrintToChatAll("[%s] {green}1v1 Dolayısıyla Round {darkred}%s {green}Saniye Sonra Otomatik Bitirilecek", tag1, finish_time);
-		h_timer = CreateTimer(round_finish_time.FloatValue, timer_roundfinish);
-	}
-	else
-	{
-		h_timer = INVALID_HANDLE;
-		KillTimer(h_timer);
-		CloseHandle(h_timer);
+public Action comrrr(int client, int args){
+	if(g_timer){
+		PrintToConsole(client, "Zamanlayici Açık");
+	}else{
+		PrintToConsole(client, "Zamanlayici Kapalı");
 	}
 }
-
-public Action:timer_roundfinish(Handle:timer)
-{
-	if(h_timer)
-	{
-		h_timer = INVALID_HANDLE;
-		CloseHandle(h_timer);
-		CloseHandle(timer);
-		CS_TerminateRound(3.0, CSRoundEnd_Draw, true);
+public void Event_PlayerDeath(Event hEvent, const char[] sEvName, bool bDontBroadcast){
+	if (GetAliveTeamCount(2) == 1 && GetAliveTeamCount(3) == 1){
+		if(!g_timer){
+			g_timer = CreateTimer(30.0, timer_1v1);
+		}
 	}
 }
-
-public void OnAutoConfigsBuffered()
-{
-    CreateTimer(3.0, awpaimcontrol);
+public void Event_RoundEnd(Event hEvent, const char[] sEvName, bool bDontBroadcast){
+	if (g_timer){
+		CloseHandle(g_timer);
+		g_timer = null;
+	}
 }
-
-public Action awpaimcontrol(Handle timer)
-{
-    char filename[512];
-    GetPluginFilename(INVALID_HANDLE, filename, sizeof(filename));
-    char mapname[PLATFORM_MAX_PATH];
-    GetCurrentMap(mapname, sizeof(mapname));
-    if (StrContains(mapname, "awp_", false) == -1)
-    {
-        ServerCommand("sm plugins unload %s", filename);
-    }
-    else
-    if (StrContains(mapname, "aim", false) == -1)
-    {
-        ServerCommand("sm plugins unload %s", filename);
-    }
-    else 
-    if (StrContains(mapname, "awp_", false) == 0)
-    {
-        ServerCommand("sm plugins load %s", filename);
-    }
-    else
-    if (StrContains(mapname, "aim_", false) == 0)
-    {
-        ServerCommand("sm plugins load %s", filename);
-    }
-    return Plugin_Stop;
+public Action timer_1v1(Handle Timer){
+	CS_TerminateRound(3.0, CSRoundEnd_Draw, true);
 }
+stock int GetAliveTeamCount(int team){
+    int number = 0;
+    for (int i = 1; i <= MaxClients; i++){
+        if (IsClientInGame(i) && !IsFakeClient(i) && IsPlayerAlive(i) && GetClientTeam(i) == team) 
+            number++;
+    }
+    return number;
+} 
